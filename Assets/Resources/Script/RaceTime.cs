@@ -20,7 +20,7 @@ public class RaceTime : MonoBehaviour
 
     private void FixedUpdate() 
     {
-        if (GameManager.Instance.CountNum == 0)
+        if (GameManager.Instance.countDownNum == 0)
             PassingTime();
     }
     

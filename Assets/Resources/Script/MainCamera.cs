@@ -8,11 +8,6 @@ public class MainCamera : MonoBehaviour
 	[SerializeField] private GameObject cameraPos;
 	[SerializeField] private float speed;
 
-    private void FixedUpdate() 
-	{
-		
-	}
-
 	public void MoveCamera(bool _booster)
     {
 		if (_booster == false)

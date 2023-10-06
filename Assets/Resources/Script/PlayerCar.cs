@@ -29,42 +29,40 @@ public class PlayerCar : MonoBehaviour
 
 	[Space(20)]
 	[SerializeField] private float SteerAngle = 45f;
-	[SerializeField] private Facade carFacade;
 	[SerializeField] private CarBooster carBooster;
 
 	private float prevSteerAngle;
 	private float power;
 
 	Rigidbody rigid;
-	bool drift;
-	WheelFrictionCurve ForRRwheel;
-	WheelFrictionCurve ForRLwheel;
-	WheelFrictionCurve SideRLwheel;
-	WheelFrictionCurve SideRRwheel;
+	bool isDrift;
+	WheelFrictionCurve forRRwheel;
+	WheelFrictionCurve forRLwheel;
+	WheelFrictionCurve sideRLwheel;
+	WheelFrictionCurve sideRRwheel;
 
 	private void Awake() 
 	{
 		rigid = GetComponent<Rigidbody>();
 	}
 
-    void Start() 
+	private void Start() 
 	{
 		rigid.centerOfMass = new Vector3(0.0f, -0.15f, 0.2f);
 		power = 22.0f;
-		drift = true;
-		ForRRwheel = colliderRR.forwardFriction;
-		ForRLwheel = colliderRL.forwardFriction;
-		SideRRwheel = colliderRR.sidewaysFriction;
-		SideRLwheel = colliderRL.sidewaysFriction;
+		isDrift = false;
+		forRRwheel = colliderRR.forwardFriction;
+		forRLwheel = colliderRL.forwardFriction;
+		sideRRwheel = colliderRR.sidewaysFriction;
+		sideRLwheel = colliderRL.sidewaysFriction;
 	}
 
-    void FixedUpdate() 
+	private void FixedUpdate() 
 	{
-		carFacade.MainCameraMethod();
 		UpdateWheelPoses();
 		Steer();
 
-		if (GameManager.Instance.CountNum == 0) 
+		if (GameManager.Instance.countDownNum == 0) 
 		{
 			Control();
 			Drift();
@@ -74,16 +72,10 @@ public class PlayerCar : MonoBehaviour
 
 		if (GameManager.Instance.EndRace == true) 
 		{
-			colliderRR.brakeTorque = 45000.0f;
-			colliderRL.brakeTorque = 45000.0f;
+			colliderRR.brakeTorque = 100000.0f;
+			colliderRL.brakeTorque = 100000.0f;
 		}
 	}
-
-    void Update()
-    {
-		carFacade.SpeedoMeterMethod();
-		carFacade.CarSoundMethod();
-    }
 
     private void OnTriggerEnter(Collider other) 
 	{
@@ -118,6 +110,8 @@ public class PlayerCar : MonoBehaviour
 		UpdateWheelPos(ref colliderFR, ref wheelTransformFR);
     }
 
+	/* 비스듬한 트랙을 돌다보니 앞바퀴가 도로에 붙어있지 않는 현상을 발견함
+	 그래서 앞바퀴 위치를 고정시키는 메서드를 만들었음 */
 	void UpdateWheelPos(ref WheelCollider _collider, ref Transform _tire) // 앞바퀴 위치 고정
 	{
 		Vector3 wheelPosition = Vector3.zero;
@@ -179,19 +173,14 @@ public class PlayerCar : MonoBehaviour
 		currentSpeed = 2 * 3.14f * colliderRL.radius * colliderRL.rpm * 60 / 1000;
 		currentSpeed = Mathf.Round(currentSpeed);
 
-		if (currentSpeed <= 0 && currentSpeed > -maxSpeed) 
-		{
-			if (carBooster.Booster == true)
-				BoosterOn();
-			else
-				BoosterOff();
-		}
-		else if (currentSpeed >= 0 && currentSpeed < maxRevSpeed) 
+		if (currentSpeed <= 0 && currentSpeed > -maxSpeed)
+			BoosterCheck();
+		else if (currentSpeed >= 0 && currentSpeed < maxRevSpeed)
 		{
 			colliderRR.motorTorque = -maxTorque * Input.GetAxis("Vertical") * power;
 			colliderRL.motorTorque = -maxTorque * Input.GetAxis("Vertical") * power;
 		}
-		else 
+		else
 		{
 			colliderRR.motorTorque = 0;
 			colliderRL.motorTorque = 0;
@@ -221,37 +210,25 @@ public class PlayerCar : MonoBehaviour
 	{
 		if (Input.GetKey(KeyCode.LeftShift))
 		{
-			if (carBooster.TireMarks[0].emitting == false &&
-			   carBooster.TireMarks[1].emitting == false)
-			{
-				if (Input.GetKey(KeyCode.RightArrow) && !Input.GetKey(KeyCode.LeftArrow))
-					DriftStart();
-				else if (Input.GetKey(KeyCode.LeftArrow) && !Input.GetKey(KeyCode.RightArrow))
-					DriftStart();
-			}
-			else if (carBooster.TireMarks[0].emitting == true &&
-			   carBooster.TireMarks[1].emitting == true)
-            {
-				if (Input.GetKey(KeyCode.RightArrow) && !Input.GetKey(KeyCode.LeftArrow))
-					DriftStop();
-				else if (Input.GetKey(KeyCode.LeftArrow) && !Input.GetKey(KeyCode.RightArrow))
-					DriftStop();
-			}
+			if (Input.GetKey(KeyCode.RightArrow) && !Input.GetKey(KeyCode.LeftArrow))
+				DriftStart();
+			else if (Input.GetKey(KeyCode.LeftArrow) && !Input.GetKey(KeyCode.RightArrow))
+				DriftStart();
 		}
 	}
 
 	void Stiffness()
 	{
 		if (carBooster.TireMarks[0].emitting == true &&
-			carBooster.TireMarks[1].emitting == true && 
+			carBooster.TireMarks[1].emitting == true &&
 			!Input.GetKey(KeyCode.LeftShift))
 		{
-			SideRRwheel.stiffness += Time.deltaTime * 1.3f;
-			SideRLwheel.stiffness += Time.deltaTime * 1.3f;
+			sideRRwheel.stiffness += Time.deltaTime * 1.25f;
+			sideRLwheel.stiffness += Time.deltaTime * 1.25f;
 
-			if (SideRRwheel.stiffness >= 2.0f)
+			if (sideRRwheel.stiffness >= 2.0f)
 				DriftStop();
-			else if (SideRRwheel.stiffness < 2.0f && SideRRwheel.stiffness >= 0.0f)
+			else if (sideRRwheel.stiffness < 2.0f && sideRRwheel.stiffness >= 0.0f)
 			{
 				if (Input.GetKey(KeyCode.UpArrow))
 				{
@@ -261,20 +238,20 @@ public class PlayerCar : MonoBehaviour
 						{
 							wheelTransformFL.Rotate(Vector3.up, (colliderFL.steerAngle - prevSteerAngle) * Time.fixedDeltaTime, Space.World);
 							wheelTransformFR.Rotate(Vector3.up, (colliderFR.steerAngle - prevSteerAngle) * Time.fixedDeltaTime, Space.World);
-							StiffnessUp();
+							StiffnessUp(20.0f);
 						}
 						else if (Input.GetAxis("Horizontal") < 0)
-							StiffnessDown();
+							StiffnessDown(20.0f);
 					}
 					else if (Input.GetKey(KeyCode.LeftArrow) && !Input.GetKey(KeyCode.RightArrow))
 					{
 						if (Input.GetAxis("Horizontal") > 0)
-							StiffnessDown();
+							StiffnessDown(20.0f);
 						else if (Input.GetAxis("Horizontal") < 0)
 						{
 							wheelTransformFL.Rotate(Vector3.up, (colliderFL.steerAngle - prevSteerAngle) * Time.fixedDeltaTime, Space.World);
 							wheelTransformFR.Rotate(Vector3.up, (colliderFR.steerAngle - prevSteerAngle) * Time.fixedDeltaTime, Space.World);
-							StiffnessUp();
+							StiffnessUp(20.0f);
 						}
 					}
 				}
@@ -284,22 +261,22 @@ public class PlayerCar : MonoBehaviour
 					{
 						if (Input.GetAxis("Horizontal") > 0)
 						{
-							wheelTransformFL.Rotate(Vector3.up, (colliderFL.steerAngle + prevSteerAngle) * Time.fixedDeltaTime, Space.World);
-							wheelTransformFR.Rotate(Vector3.up, (colliderFR.steerAngle + prevSteerAngle) * Time.fixedDeltaTime, Space.World);
-							StiffnessUp();
+							wheelTransformFL.Rotate(Vector3.up, (-colliderFL.steerAngle + prevSteerAngle) * Time.fixedDeltaTime, Space.World);
+							wheelTransformFR.Rotate(Vector3.up, (-colliderFR.steerAngle + prevSteerAngle) * Time.fixedDeltaTime, Space.World);
+							StiffnessUp(-40.0f);
 						}
 						else if (Input.GetAxis("Horizontal") < 0)
-							StiffnessDown();
+							StiffnessDown(-40.0f);
 					}
 					else if (Input.GetKey(KeyCode.LeftArrow) && !Input.GetKey(KeyCode.RightArrow))
 					{
 						if (Input.GetAxis("Horizontal") > 0)
-							StiffnessDown();
+							StiffnessDown(-40.0f);
 						else if (Input.GetAxis("Horizontal") < 0)
 						{
-							wheelTransformFL.Rotate(Vector3.up, (colliderFL.steerAngle + prevSteerAngle) * Time.fixedDeltaTime, Space.World);
-							wheelTransformFR.Rotate(Vector3.up, (colliderFR.steerAngle + prevSteerAngle) * Time.fixedDeltaTime, Space.World);
-							StiffnessUp();
+							wheelTransformFL.Rotate(Vector3.up, (-colliderFL.steerAngle + prevSteerAngle) * Time.fixedDeltaTime, Space.World);
+							wheelTransformFR.Rotate(Vector3.up, (-colliderFR.steerAngle + prevSteerAngle) * Time.fixedDeltaTime, Space.World);
+							StiffnessUp(-40.0f);
 						}
 					}
 				}
@@ -309,72 +286,77 @@ public class PlayerCar : MonoBehaviour
 
 	void DriftStart()
 	{
-		drift = true;
-		carBooster.TrailStartEmitter();
-		SideRRwheel.stiffness = 0.0f;
-		SideRLwheel.stiffness = 0.0f;
+		if (carBooster.TireMarks[0].emitting == false &&
+			carBooster.TireMarks[1].emitting == false)
+		{
+			isDrift = true;
+			carBooster.TrailStartEmitter();
+			sideRRwheel.stiffness = 0.0f;
+			sideRLwheel.stiffness = 0.0f;
+			colliderRR.sidewaysFriction = sideRRwheel;
+			colliderRL.sidewaysFriction = sideRLwheel;
 
-		colliderRR.sidewaysFriction = SideRRwheel;
-		colliderRL.sidewaysFriction = SideRLwheel;
-
-		transform.Rotate(new Vector3(0.0f, Input.GetAxis("Horizontal") * SteerAngle * Time.fixedDeltaTime, 0.0f), Space.World);
+			transform.Rotate(new Vector3(0.0f, Input.GetAxis("Horizontal") * SteerAngle * Time.fixedDeltaTime, 0.0f), Space.World);
+		}
 	}
 
 	void DriftStop()
 	{
-		drift = false;
+		isDrift = false;
 		carBooster.TrailStopEmitter();
-		SideRRwheel.stiffness = 2.0f;
-		SideRLwheel.stiffness = 2.0f;
+		sideRRwheel.stiffness = 2.0f;
+		sideRLwheel.stiffness = 2.0f;
 
-		colliderRR.sidewaysFriction = SideRRwheel;
-		colliderRL.sidewaysFriction = SideRLwheel;
+		colliderRR.sidewaysFriction = sideRRwheel;
+		colliderRL.sidewaysFriction = sideRLwheel;
 	}
 
-	void StiffnessUp()
+	void StiffnessUp(float _addAngle)
 	{
-		SideRRwheel.stiffness += Time.fixedDeltaTime * 1.0f;
-		SideRLwheel.stiffness += Time.fixedDeltaTime * 1.0f;
+		sideRRwheel.stiffness += Time.fixedDeltaTime * 1.0f;
+		sideRLwheel.stiffness += Time.fixedDeltaTime * 1.0f;
 
-		colliderRR.sidewaysFriction = SideRRwheel;
-		colliderRL.sidewaysFriction = SideRLwheel;
+		colliderRR.sidewaysFriction = sideRRwheel;
+		colliderRL.sidewaysFriction = sideRLwheel;
 
-		transform.Rotate(new Vector3(0.0f, Input.GetAxis("Horizontal") * (SteerAngle + 20.0f) * Time.fixedDeltaTime, 0.0f), Space.World);
+		transform.Rotate(new Vector3(0.0f, Input.GetAxis("Horizontal") * (SteerAngle + _addAngle) * Time.fixedDeltaTime, 0.0f), Space.World);
 	}
 
-	void StiffnessDown()
+	void StiffnessDown(float _addAngle)
 	{
-		SideRRwheel.stiffness -= Time.fixedDeltaTime * 0.8f;
-		SideRLwheel.stiffness -= Time.fixedDeltaTime * 0.8f;
+		sideRRwheel.stiffness -= Time.fixedDeltaTime * 1.25f;
+		sideRLwheel.stiffness -= Time.fixedDeltaTime * 1.25f;
 
-		colliderRR.sidewaysFriction = SideRRwheel;
-		colliderRL.sidewaysFriction = SideRLwheel;
+		colliderRR.sidewaysFriction = sideRRwheel;
+		colliderRL.sidewaysFriction = sideRLwheel;
 
-		transform.Rotate(new Vector3(0.0f, Input.GetAxis("Horizontal") * (SteerAngle + 20.0f) * Time.fixedDeltaTime, 0.0f), Space.World);
+		transform.Rotate(new Vector3(0.0f, Input.GetAxis("Horizontal") * (SteerAngle + _addAngle) * Time.fixedDeltaTime, 0.0f), Space.World);
 	}
 
-	void BoosterOn()
+	void BoosterCheck()
 	{
-		ForRRwheel.stiffness = 1.5f;
-		ForRLwheel.stiffness = 1.5f;
+		if (carBooster.useBooster == true)
+		{
+			forRRwheel.stiffness = 1.5f;
+			forRLwheel.stiffness = 1.5f;
 
-		colliderRR.forwardFriction = ForRRwheel;
-		colliderRL.forwardFriction = ForRLwheel;
+			colliderRR.forwardFriction = forRRwheel;
+			colliderRL.forwardFriction = forRLwheel;
 
-		colliderRR.motorTorque = -maxTorque * Input.GetAxis("Vertical") * (power + 10.0f);
-		colliderRL.motorTorque = -maxTorque * Input.GetAxis("Vertical") * (power + 10.0f);
-	}
+			colliderRR.motorTorque = -maxTorque * Input.GetAxis("Vertical") * (power + 10.0f);
+			colliderRL.motorTorque = -maxTorque * Input.GetAxis("Vertical") * (power + 10.0f);
+		}
+		else
+		{
+			forRRwheel.stiffness = 2.0f;
+			forRLwheel.stiffness = 2.0f;
 
-	void BoosterOff()
-	{
-		ForRRwheel.stiffness = 2.0f;
-		ForRLwheel.stiffness = 2.0f;
+			colliderRR.forwardFriction = forRRwheel;
+			colliderRL.forwardFriction = forRLwheel;
 
-		colliderRR.forwardFriction = ForRRwheel;
-		colliderRL.forwardFriction = ForRLwheel;
-
-		colliderRR.motorTorque = -maxTorque * Input.GetAxis("Vertical") * power;
-		colliderRL.motorTorque = -maxTorque * Input.GetAxis("Vertical") * power;
+			colliderRR.motorTorque = -maxTorque * Input.GetAxis("Vertical") * power;
+			colliderRL.motorTorque = -maxTorque * Input.GetAxis("Vertical") * power;
+		}
 	}
 
 	public ref float getCurrentSpeed() 

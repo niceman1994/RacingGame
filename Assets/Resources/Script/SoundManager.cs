@@ -37,7 +37,7 @@ public class SoundManager : ManagerSingleton<SoundManager>
     }
 
     void setPause() {
-        if (GameManager.Instance.CountNum == 0) 
+        if (GameManager.Instance.countDownNum == 0) 
         {
             if (Input.GetKeyDown(KeyCode.Escape)) 
             {

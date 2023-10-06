@@ -22,8 +22,8 @@ public class GameManager : ManagerSingleton<GameManager>
     public bool EndRace;
 
     [Header("Countdown")]
-    public Text Count;
-    public int CountNum;
+    public Text countDown;
+    public int countDownNum;
 
     private void Start() 
     {
@@ -31,8 +31,7 @@ public class GameManager : ManagerSingleton<GameManager>
         downForceValue = 500.0f;
         StartRace = false;
         EndRace = false;
-        CountNum = 3;
-        StartCoroutine(countDown());
+        StartCoroutine(CountDown());
     }
 
     private void Update() 
@@ -62,7 +61,7 @@ public class GameManager : ManagerSingleton<GameManager>
         }
     }
 
-    public IEnumerator countDown() 
+    public IEnumerator CountDown() 
     {
         while (true) 
         {
@@ -71,25 +70,25 @@ public class GameManager : ManagerSingleton<GameManager>
             if (StartRace == true) 
             {
                 SoundManager.Instance.GameBGM[2].Play();
-                Count.text = CountNum.ToString();
+                countDown.text = countDownNum.ToString();
                 yield return new WaitForSeconds(1.0f);
 
-                CountNum -= 1;
-                Count.text = CountNum.ToString();
+                countDownNum -= 1;
+                countDown.text = countDownNum.ToString();
                 yield return new WaitForSeconds(1.0f);
 
-                CountNum -= 1;
-                Count.text = CountNum.ToString();
+                countDownNum -= 1;
+                countDown.text = countDownNum.ToString();
                 yield return new WaitForSeconds(1.0f);
 
-                CountNum -= 1;
-                Count.text = "Start";
+                countDownNum -= 1;
+                countDown.text = "Start";
                 yield return new WaitForSeconds(1.0f);
-                Count.gameObject.SetActive(false);
+                countDown.gameObject.SetActive(false);
 
-                if (CountNum == 0) 
+                if (countDownNum == 0) 
                 {
-                    CountNum = 0;
+                    countDownNum = 0;
                     break;
                 }
             }

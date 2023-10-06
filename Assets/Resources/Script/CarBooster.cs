@@ -15,19 +15,19 @@ public class CarBooster : MonoBehaviour
     [SerializeField] private Image BoostGauge;
     [SerializeField] private GameObject[] boostItem;
     [SerializeField] private float boosterTime;
-    [SerializeField] private bool booster;
+    [SerializeField] private bool usebooster;
 
     public ref float CarSpeed { get { return ref carSpeed; } }
     public TrailRenderer[] TireMarks { get { return tireMarks; } }
     public float BoosterTime { get { return boosterTime; } }
-    public bool Booster { get { return booster; } }
+    public bool useBooster { get { return usebooster; } }
 
     void Start()
     {
         boostItem[0].SetActive(false);
         boostItem[1].SetActive(false);
         boosterTime = 3.5f;
-        booster = false;
+        usebooster = false;
     }
 
     void FixedUpdate()
@@ -91,28 +91,28 @@ public class CarBooster : MonoBehaviour
 
     void UseBooster()
     {
-        if (Input.GetKeyDown(KeyCode.LeftControl) && booster == false)
+        if (Input.GetKeyDown(KeyCode.LeftControl) && usebooster == false)
         {
             if (boostItem[0].activeInHierarchy == true &&
                 boostItem[1].activeInHierarchy == false)
             {
-                booster = true;
+                usebooster = true;
                 boostItem[0].SetActive(false);
             }
             else if (boostItem[0].activeInHierarchy == true &&
                 boostItem[1].activeInHierarchy == true)
             {
-                booster = true;
+                usebooster = true;
                 boostItem[1].SetActive(false);
             }
         }
 
-        if (booster == true)
+        if (usebooster == true)
             boosterTime = boosterTime - Time.fixedDeltaTime >= 0.0f ? boosterTime - Time.fixedDeltaTime : 0.0f;
 
         if (boosterTime == 0.0f)
         {
-            booster = false;
+            usebooster = false;
             boosterTime = 3.5f;
         }
     }

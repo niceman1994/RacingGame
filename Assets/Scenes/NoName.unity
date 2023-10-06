@@ -3118,7 +3118,7 @@ WheelCollider:
     spring: 10
     damper: 0
     targetPosition: 0.5
-  m_SuspensionDistance: 0.07
+  m_SuspensionDistance: 0.06
   m_ForceAppPointDistance: 0
   m_Mass: 60
   m_WheelDampingRate: 0.05
@@ -7420,15 +7420,14 @@ MonoBehaviour:
   Logo: {fileID: 1432117594}
   Intro: {fileID: 1041079986}
   Lapcount: {fileID: 1489894602}
-  Currentlap: 1
+  Currentlap: 0
   Lastlap: 2
   UI: {fileID: 4851937899215756085}
-  Speed: 0
   downForceValue: 0
   StartRace: 0
   EndRace: 0
-  Count: {fileID: 1806184155}
-  CountNum: 0
+  countDown: {fileID: 1806184155}
+  countDownNum: 3
 --- !u!4 &647623176
 Transform:
   m_ObjectHideFlags: 0
@@ -15638,7 +15637,7 @@ WheelCollider:
     spring: 10
     damper: 0
     targetPosition: 0.5
-  m_SuspensionDistance: 0.07
+  m_SuspensionDistance: 0.06
   m_ForceAppPointDistance: 0
   m_Mass: 60
   m_WheelDampingRate: 0.05
@@ -56621,9 +56620,8 @@ MonoBehaviour:
   decSpeed: 600
   maxSpeed: 315
   maxRevSpeed: 120
-  carFacade: {fileID: 7563879267265136213}
-  carBooster: {fileID: 7563879267265136212}
   SteerAngle: 40
+  carBooster: {fileID: 7563879267265136212}
 --- !u!64 &7563879267265136209
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -56687,7 +56685,7 @@ MonoBehaviour:
   - {fileID: 1143554699}
   - {fileID: 1622476280}
   boosterTime: 0
-  booster: 0
+  usebooster: 0
 --- !u!114 &7563879267265136213
 MonoBehaviour:
   m_ObjectHideFlags: 0
